@@ -29,14 +29,19 @@ class ntp {
 		require => Package[$ntp_package];
 	}
 
-	service{ $ntp_package:
+	$ntp_service = $operatingsystem ? {
+			centos => 'ntpd',
+			defalt => $ntp_package,
+		}
+
+	service{ $ntp_service:
 		ensure => running,
 		pattern => ntpd,
 		subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
 	}
 
 	file {
-                "$ntp_base_dir":
+                "${ntp_base_dir}":
                         ensure => directory,
                         force => true,
                         mode => 0755, owner => root, group => root;
