@@ -5,12 +5,15 @@
 modules_dir { "ntp": }
 	
 $ntp_base_dir = "/var/lib/puppet/modules/ntp"
-$ntp_package = $lsbdistcodename ? { 'sarge' => 'ntp-server', default => 'ntp' }
+$ntp_package_real = $ntp_package ? {
+			'' => $lsbdistcodename ? { 'sarge' => 'ntp-server', default => 'ntp' },
+			default => $ntp_package,
+		}
 
 class ntp {
 
 	package {
-		$ntp_package:
+		$ntp_package_real:
 			ensure => installed,
 			before => File["/etc/ntp.conf"],
 			category => $operatingsystem ? {
@@ -33,12 +36,12 @@ class ntp {
 
 	config_file { "/etc/ntp.conf":
 		content => template("ntp/ntp.conf"),
-		require => Package[$ntp_package];
+		require => Package[$ntp_package_real];
 	}
 
 	$ntp_service = $operatingsystem ? {
 			centos => 'ntpd',
-			defalt => $ntp_package,
+			defalt => $ntp_package_real,
 		}
 
 	service{ $ntp_service:
