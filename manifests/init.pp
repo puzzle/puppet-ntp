@@ -19,6 +19,13 @@ class ntp {
                 	},
 	}
 
+        file {
+                "/var/lib/puppet/modules/ntp":
+                        ensure => directory,
+                        force => true,
+                        mode => 0755, owner => root, group => root;
+        }
+
 	$local_stratum = $ntp_local_stratum ? {
 		'' => 13,
 		default => $ntp_local_stratum,
@@ -39,14 +46,7 @@ class ntp {
 		pattern => ntpd,
 		subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
 	}
-
-	file {
-                "${ntp_base_dir}":
-                        ensure => directory,
-                        force => true,
-                        mode => 0755, owner => root, group => root;
-        }
-
+	
 	# various files and directories used by this module
 	file{
 		"${ntp_base_dir}/munin_plugin":
