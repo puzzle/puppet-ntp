@@ -41,7 +41,7 @@ class ntp {
 
 	$ntp_service = $operatingsystem ? {
 			centos => 'ntpd',
-			defalt => $ntp_package_real,
+			default => $ntp_package_real,
 		}
 
 	service{ $ntp_service:
