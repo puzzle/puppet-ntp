@@ -20,6 +20,10 @@ class ntp {
 	                        gentoo => 'net-misc',
                         	default => '',
                 	},
+			source => $operatingsystem ? {
+				openbsd => 'ftp://mirror.switch.ch/pub/OpenBSD/4.2/packages/i386/ntp-4.2.0ap3.tgz'
+				default => '',
+			},
 	}
 
         file {
