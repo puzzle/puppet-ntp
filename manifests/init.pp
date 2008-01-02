@@ -26,7 +26,7 @@ class ntp {
                 "/var/lib/puppet/modules/ntp":
                         ensure => directory,
                         force => true,
-                        mode => 0755, owner => root, group => root;
+                        mode => 0755, owner => root, group => 0;
         }
 
 	$local_stratum = $ntp_local_stratum ? {
@@ -54,7 +54,7 @@ class ntp {
 	file{
 		"${ntp_base_dir}/munin_plugin":
 			source => "puppet://$servername/ntp/ntp_",
-			mode => 0755, owner => root, group => root;
+			mode => 0755, owner => root, group => 0;
 	}
 
 	$ntps = gsub(split($configured_ntp_servers, " "), "(.+)", "ntp_\\1")
