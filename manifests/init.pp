@@ -57,6 +57,10 @@ class ntp {
 		ensure => running,
 		pattern => ntpd,
 		subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
+		binary => $operatingsystem ? {
+			openbsd => "/usr/sbin/ntpd",
+			default => undef,
+		},
 	}
 	
 	# various files and directories used by this module
