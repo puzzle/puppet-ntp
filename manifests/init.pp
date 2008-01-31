@@ -50,6 +50,7 @@ class ntp {
 
 	$ntp_service = $operatingsystem ? {
 			centos => 'ntpd',
+			gentoo => 'ntpd',
 			default => $ntp_package_real,
 		}
 
