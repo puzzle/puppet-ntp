@@ -56,7 +56,6 @@ class ntp {
 
 	service{ $ntp_service:
 		ensure => running,
-        enable => true,
 		pattern => ntpd,
 		subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
 	}
@@ -67,6 +66,10 @@ class ntp {
                 binary =>  "/usr/sbin/ntpd",
             }
         }
+        centos,debian,ubuntu: {
+            service{ $ntp_service:
+                enable => true,
+            }
     }
 	
 	# various files and directories used by this module
