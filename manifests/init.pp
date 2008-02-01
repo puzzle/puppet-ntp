@@ -56,14 +56,18 @@ class ntp {
 
 	service{ $ntp_service:
 		ensure => running,
-        enable => true,
+		pattern => ntpd,
 		subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
 	}
 
     case $operatingsystem {
+	    centos,redhat: {
+            service{ $ntp_service:
+                enable => true,
+            }
+        }
         openbsd: {
             service{ $ntp_service:
-		        pattern => ntpd,
                 binary =>  "/usr/sbin/ntpd",
             }
         }
