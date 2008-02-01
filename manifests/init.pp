@@ -63,7 +63,7 @@ class ntp {
 
     case $operatingsystem {
         openbsd: {
-            service{ $ntp_service
+            service{ $ntp_service:
                 binary =>  "/usr/sbin/ntpd",
             }
         }
