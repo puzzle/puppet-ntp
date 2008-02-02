@@ -6,16 +6,16 @@ modules_dir { "ntp": }
 	
 $ntp_base_dir = "/var/lib/puppet/modules/ntp"
 $ntp_package_real = $ntp_package ? {
-			'' => $lsbdistcodename ? { 'sarge' => 'ntp-server', default => 'ntp' },
-			default => $ntp_package,
-		}
+    '' => $lsbdistcodename ? { 'sarge' => 'ntp-server', default => 'ntp' },
+	default => $ntp_package,
+}
 
 class ntp {
 
 	$true_exec = $operatingsystem ? {
-                openbsd => '/usr/bin/true',
-                default => '/bin/true'
-        }
+        openbsd => '/usr/bin/true',
+        default => '/bin/true'
+    }
 
 	package {
 		$ntp_package_real:
