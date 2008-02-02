@@ -54,21 +54,28 @@ class ntp {
 			default => $ntp_package_real,
 		}
 
-	service{ $ntp_service:
-		ensure => running,
-		pattern => ntpd,
-		subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
-	}
 
     case $operatingsystem {
-	    centos,redhat: {
+        centos,redhat,debian,ubuntu: {
             service{ $ntp_service:
                 enable => true,
+                ensure => running,
+                subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
             }
         }
+        gentoo: {
+	        service{ $ntp_service:
+        		ensure => running,
+        		subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
+        	}
+        } 
         openbsd: {
             service{ $ntp_service:
                 binary =>  "/usr/sbin/ntpd",
+                provider => base,
+                pattern => ntpd,
+                ensure => running,
+                subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
             }
         }
     }
