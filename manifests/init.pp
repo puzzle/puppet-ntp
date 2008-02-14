@@ -1,5 +1,6 @@
 # ntp/manifests/init.pp - Classes for configuring NTP
-# Copyright (C) 2007 admin@immerda.ch
+# Copyright (C) 2007 David Schmitt <david@schmitt.edv-bus.at>
+# improved by admin@immerda.ch
 # See LICENSE for the full license granted to you.
 
 modules_dir { "ntp": }
