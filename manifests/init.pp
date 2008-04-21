@@ -114,6 +114,7 @@ class ntp {
 				"server_${fqdn}":
 					dir => "/var/lib/puppet/modules/ntp/ntp.client.d",
 					content => "server ${fqdn} iburst\n",
+                    tag => 'ntp',
 					## TODO: activate this dependency when the bug is fixed
 					#before => File["/etc/ntp.client.conf"]
 					;
@@ -121,6 +122,7 @@ class ntp {
 				"peer_${fqdn}":
 					dir => "/var/lib/puppet/modules/ntp/ntp.server.d",
 					content => "peer ${fqdn} iburst\nrestrict ${fqdn} nomodify notrap\n",
+                    tag => 'ntp',
 					## TODO: activate this dependency when the bug is fixed
 					#before => File["/etc/ntp.server.conf"]
 					;
@@ -142,7 +144,7 @@ class ntp {
 	}
 
 	# collect all our configs
-	File <<||>>
+	File <<| tag == 'ntp' |>>
 
 
 	# private
@@ -182,11 +184,6 @@ class ntp {
 				;
 		}
 	}
-
-	#legacy
-	file{"/etc/ntp.puppet.conf": ensure => absent, }
-	file{"/etc/cron.d/dom0_ntp": ensure => absent, }
-
 }
 
 # include this class on hosts who collect files but do not have other ntp infrastructure
