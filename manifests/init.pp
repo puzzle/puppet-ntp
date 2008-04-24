@@ -1,6 +1,7 @@
 # ntp/manifests/init.pp - Classes for configuring NTP
 # Copyright (C) 2007 David Schmitt <david@schmitt.edv-bus.at>
 # improved by admin@immerda.ch
+# adapted by Puzzle ITC haerry+puppet(at)puzzle.ch
 # See LICENSE for the full license granted to you.
 
 modules_dir { "ntp": }
@@ -54,7 +55,6 @@ class ntp {
 			gentoo => 'ntpd',
 			default => $ntp_package_real,
 		}
-
 
     case $operatingsystem {
         openbsd: {
@@ -114,7 +114,7 @@ class ntp {
 				"server_${fqdn}":
 					dir => "/var/lib/puppet/modules/ntp/ntp.client.d",
 					content => "server ${fqdn} iburst\n",
-                    tag => 'ntp',
+					tag => 'ntp',
 					## TODO: activate this dependency when the bug is fixed
 					#before => File["/etc/ntp.client.conf"]
 					;
@@ -122,7 +122,7 @@ class ntp {
 				"peer_${fqdn}":
 					dir => "/var/lib/puppet/modules/ntp/ntp.server.d",
 					content => "peer ${fqdn} iburst\nrestrict ${fqdn} nomodify notrap\n",
-                    tag => 'ntp',
+					tag => 'ntp',
 					## TODO: activate this dependency when the bug is fixed
 					#before => File["/etc/ntp.server.conf"]
 					;
@@ -138,7 +138,7 @@ class ntp {
 			}
 			config_file { "/etc/ntp.client.conf": content => "\n", }
 
-			nagios2::service { "check_ntp": }
+			nagios::service { "check_ntp": }
 
 		}
 	}
@@ -184,6 +184,7 @@ class ntp {
 				;
 		}
 	}
+
 }
 
 # include this class on hosts who collect files but do not have other ntp infrastructure
