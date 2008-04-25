@@ -95,7 +95,7 @@ class ntp {
 			file { "/var/lib/puppet/modules/ntp/ntp.server.d": ensure => directory, }
 			# provide dummy dependency for collected files
 			exec { "concat_/var/lib/puppet/modules/ntp/ntp.server.d":
-				command => "true"
+				command => "true",
 				refreshonly => true,
 			}
 			config_file { "/etc/ntp.server.conf": content => "\n", }
@@ -128,7 +128,7 @@ class ntp {
 			file { "/var/lib/puppet/modules/ntp/ntp.client.d": ensure => directory, }
 			# provide dummy dependency for collected files
 			exec { "concat_/var/lib/puppet/modules/ntp/ntp.client.d":
-				command => "true"
+				command => "true",
 				refreshonly => true,
 			}
 			config_file { "/etc/ntp.client.conf": content => "\n", }
@@ -186,10 +186,10 @@ class ntp {
 class ntp::none {
 	exec {
 		"concat_/var/lib/puppet/modules/ntp/ntp.client.d":
-			command => "true"
+			command => "true",
 			refreshonly => true;
 		"concat_/var/lib/puppet/modules/ntp/ntp.server.d":
-			command => "true"
+			command => "true",
 			refreshonly => true,
 	}
 	# also provide dummy directories!
