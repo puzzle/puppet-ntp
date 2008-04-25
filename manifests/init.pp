@@ -138,7 +138,7 @@ class ntp {
 			}
 			config_file { "/etc/ntp.client.conf": content => "\n", }
 
-			nagios::service::ntp { $fqdn: }
+			include nagios::service::ntp 
 
 		}
 	}
