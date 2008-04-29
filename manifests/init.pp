@@ -7,33 +7,33 @@
 modules_dir { "ntp": }
 	
 $ntp_base_dir = "/var/lib/puppet/modules/ntp"
-$ntp_package_real = $ntp_package ? {
-    '' => $lsbdistcodename ? { 'sarge' => 'ntp-server', default => 'ntp' },
-	default => $ntp_package,
-}
 
 class ntp {
+    case $kernel {
+        linux: {
+            case $operatingsystem {
+                debian: { include ntp::debian }
+                gentoo: { include ntp::gentoo }
+                default: { include ntp::linux }
+            }
+        }
+        openbsd: { include ntp::openbsd }
+        default: { fail("no classes for this kernel yet defined!") }
+    }    
+}
 
-	package {
-		$ntp_package_real:
-			ensure => installed,
-			before => File["/etc/ntp.conf"],
-			category => $operatingsystem ? {
-	                        gentoo => 'net-misc',
-                        	default => '',
-                	},
-			source => $operatingsystem ? {
-				openbsd => 'ftp://mirror.switch.ch/pub/OpenBSD/4.2/packages/i386/ntp-4.2.0ap3.tgz',
-				default => undef,
-			},
+class ntp::base {
+
+	package { ntp:
+	    ensure => installed,
+		before => File["/etc/ntp.conf"],
 	}
 
-        file {
-                "/var/lib/puppet/modules/ntp":
-                        ensure => directory,
-                        force => true,
-                        mode => 0755, owner => root, group => 0;
-        }
+    file {"/var/lib/puppet/modules/ntp":
+        ensure => directory,
+        force => true,
+        mode => 0755, owner => root, group => 0;
+    }
 
 	$local_stratum = $ntp_local_stratum ? {
 		'' => 13,
@@ -42,37 +42,16 @@ class ntp {
 
 	config_file { "/etc/ntp.conf":
 		content => template("ntp/ntp.conf"),
-		require => Package[$ntp_package_real];
+		require => Package[ntp],
 	}
 
-	$ntp_service = $operatingsystem ? {
-			centos => 'ntpd',
-			gentoo => 'ntpd',
-			default => $ntp_package_real,
-		}
-
-    case $operatingsystem {
-        openbsd: {
-            service{ $ntp_service:
-                binary =>  "/usr/sbin/ntpd",
-                provider => base,
-                pattern => ntpd,
-                ensure => running,
-                subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
-            }
-        }
-        default: {
-            service{ $ntp_service:
-                enable => true,
-                ensure => running,
-                subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
-            }
-        }
+    service{ntpd:
+        ensure => running,
+        subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
     }
 	
 	# various files and directories used by this module
-	file{
-		"${ntp_base_dir}/munin_plugin":
+	file{"${ntp_base_dir}/munin_plugin":
 			source => "puppet://$server/ntp/ntp_",
 			mode => 0755, owner => root, group => 0;
 	}
@@ -84,57 +63,8 @@ class ntp {
 	}
 
 	case $ntp_servers { 
-		'': { # this is a client, connect to our own servers
-			info ( "${fqdn} will act as ntp client" )
-			# collect all our servers
-			concatenated_file { "/etc/ntp.client.conf":
-				dir => "/var/lib/puppet/modules/ntp/ntp.client.d",
-			}
-
-			# unused configs
-			file { "/var/lib/puppet/modules/ntp/ntp.server.d": ensure => directory, }
-			# provide dummy dependency for collected files
-			exec { "concat_/var/lib/puppet/modules/ntp/ntp.server.d":
-				command => "true",
-				refreshonly => true,
-			}
-			config_file { "/etc/ntp.server.conf": content => "\n", }
-
-		}
-		default: { # this is a server, connect to the specified upstreams
-			info ( "${fqdn} will act as ntp server using ${ntp_servers} as upstream" )
-			ntp::upstream_server { $ntp_servers: }
-			@@concatenated_file_part {
-				# export this server for our own clients
-				"server_${fqdn}":
-					dir => "/var/lib/puppet/modules/ntp/ntp.client.d",
-					content => "server ${fqdn} iburst\n",
-					tag => 'ntp',
-					## TODO: activate this dependency when the bug is fixed
-					#before => File["/etc/ntp.client.conf"]
-					;
-				# export this server for our other servers
-				"peer_${fqdn}":
-					dir => "/var/lib/puppet/modules/ntp/ntp.server.d",
-					content => "peer ${fqdn} iburst\nrestrict ${fqdn} nomodify notrap\n",
-					tag => 'ntp',
-					## TODO: activate this dependency when the bug is fixed
-					#before => File["/etc/ntp.server.conf"]
-					;
-			}
-			concatenated_file {"/etc/ntp.server.conf":
-				dir => "/var/lib/puppet/modules/ntp/ntp.server.d",
-			}
-			file { "/var/lib/puppet/modules/ntp/ntp.client.d": ensure => directory, }
-			# provide dummy dependency for collected files
-			exec { "concat_/var/lib/puppet/modules/ntp/ntp.client.d":
-				command => "true",
-				refreshonly => true,
-			}
-			config_file { "/etc/ntp.client.conf": content => "\n", }
-
-			include nagios::service::ntp 
-		}
+		'': { include ntp::client }
+		default: { inclide ntp::server }
 	}
 
 	# collect all our configs
@@ -179,6 +109,92 @@ class ntp {
 		}
 	}
 
+}
+
+# this is a server, connect to the specified upstreams
+class ntp::server {
+	info ( "${fqdn} will act as ntp server using ${ntp_servers} as upstream" )
+	ntp::upstream_server { $ntp_servers: }
+    # export this server for our own clients
+	@@concatenated_file_part {
+        "server_${fqdn}":
+	        dir => "/var/lib/puppet/modules/ntp/ntp.client.d",
+		    content => "server ${fqdn} iburst\n",
+		    tag => 'ntp',
+		    ## TODO: activate this dependency when the bug is fixed
+		    #before => File["/etc/ntp.client.conf"]
+		    ;
+		# export this server for our other servers
+		"peer_${fqdn}":
+		    dir => "/var/lib/puppet/modules/ntp/ntp.server.d",
+			content => "peer ${fqdn} iburst\nrestrict ${fqdn} nomodify notrap\n",
+			tag => 'ntp',
+			## TODO: activate this dependency when the bug is fixed
+			#before => File["/etc/ntp.server.conf"]
+			;
+	}
+	concatenated_file {"/etc/ntp.server.conf":
+	    dir => "/var/lib/puppet/modules/ntp/ntp.server.d",
+	}
+	file { "/var/lib/puppet/modules/ntp/ntp.client.d": ensure => directory, }
+	# provide dummy dependency for collected files
+	exec { "concat_/var/lib/puppet/modules/ntp/ntp.client.d":
+	    command => "true",
+		refreshonly => true,
+	}
+	config_file { "/etc/ntp.client.conf": content => "\n", }
+
+	include nagios::service::ntp 
+}
+
+# this is a client, connect to our own servers
+class ntp::client {
+    info ( "${fqdn} will act as ntp client" )
+    # collect all our servers
+    concatenated_file { "/etc/ntp.client.conf":
+        dir => "/var/lib/puppet/modules/ntp/ntp.client.d",
+    }
+
+    # unused configs
+    file { "/var/lib/puppet/modules/ntp/ntp.server.d": ensure => directory, }
+    # provide dummy dependency for collected files
+    exec { "concat_/var/lib/puppet/modules/ntp/ntp.server.d":
+        command => "true",
+        refreshonly => true,
+    }
+    config_file { "/etc/ntp.server.conf": content => "\n", }
+}
+
+class ntp::linux inherits ntp::base {
+    Service[ntpd]{
+        enable => true,
+    }
+}
+class ntp::gentoo inherits ntp::linux {
+    Package[ntp]{
+        category => 'net-misc',
+    }
+}
+
+class ntp::debian inherits ntp::linux {
+    case $lsbdistcodename {
+        'sarge': { 
+            Package[ntp]{
+                name => 'ntp-server', 
+        }
+    }
+}
+
+class ntp::openbsd inherits ntp::openbsd {
+    Package[ntp]{
+	    source => 'ftp://mirror.switch.ch/pub/OpenBSD/4.2/packages/i386/ntp-4.2.0ap3.tgz',
+    }
+    Service[ntpd]{
+        binary =>  "/usr/sbin/ntpd",
+        provider => base,
+        pattern => ntpd,
+    }
+ 
 }
 
 # include this class on hosts who collect files but do not have other ntp infrastructure
