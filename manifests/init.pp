@@ -64,7 +64,7 @@ class ntp::base {
 
 	case $ntp_servers { 
 		'': { include ntp::client }
-		default: { inclide ntp::server }
+		default: { include ntp::server }
 	}
 
 	# collect all our configs
