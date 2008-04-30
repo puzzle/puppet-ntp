@@ -181,6 +181,7 @@ class ntp::debian inherits ntp::linux {
         'sarge': { 
             Package[ntp]{
                 name => 'ntp-server', 
+            }
         }
     }
 }
