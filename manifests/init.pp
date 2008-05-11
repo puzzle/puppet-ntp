@@ -24,6 +24,10 @@ class ntp {
     if $selinux {
         include ntp::selinux
     }
+
+    case $virtual {
+        'xenu': { include ntp::xenu }
+    }
 }
 class ntp::base {
 
