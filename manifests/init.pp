@@ -20,6 +20,14 @@ class ntp {
         openbsd: { include ntp::openbsd }
         default: { fail("no classes for this kernel yet defined!") }
     }    
+
+    if $selinux {
+        include ntp::selinux
+    }
+
+    case $virtual {
+        'xenu': { include ntp::xenu }
+    }
 }
 
 class ntp::base {
@@ -50,18 +58,20 @@ class ntp::base {
         subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
     }
 	
-	# various files and directories used by this module
-	file{"${ntp_base_dir}/munin_plugin":
+    if $use_munin {
+        # various files and directories used by this module
+	    file{"${ntp_base_dir}/munin_plugin":
 			source => "puppet://$server/ntp/ntp_",
 			mode => 0755, owner => root, group => 0;
-	}
+	    }
 
-	$ntps = gsub(split($configured_ntp_servers, " "), "(.+)", "ntp_\\1")
-	munin::plugin { $ntps:
-		ensure => "munin_plugin",
-		script_path_in => $ntp_base_dir
-	}
+	    $ntps = gsub(split($configured_ntp_servers, " "), "(.+)", "ntp_\\1")
 
+	    munin::plugin { $ntps:
+		    ensure => "munin_plugin",
+		    script_path_in => $ntp_base_dir
+	    }
+    }
 	case $ntp_servers { 
 		'': { include ntp::client }
 		default: { include ntp::server }
@@ -69,26 +79,6 @@ class ntp::base {
 
 	# collect all our configs
 	File <<| tag == 'ntp' |>>
-
-
-	
-
-	# private
-	# Installs a munin plugin and configures it for a given host
-	define munin_plugin() {
-
-		$name_with_underscores = gsub($name, "\\.", "_")
-
-		# replace the "legacy" munin plugin with our own
-		munin::plugin {
-			"ntp_${name_with_underscores}": ensure => absent;
-			"ntp_${name}":
-				ensure => "munin_plugin",
-				script_path => "/var/lib/puppet/modules/ntp"
-				;
-		}
-	}
-
 }
 
 define ntp::upstream_server($server_options = 'iburst') {
@@ -141,7 +131,9 @@ class ntp::server {
 	}
 	config_file { "/etc/ntp.client.conf": content => "\n", }
 
-	include nagios::service::ntp 
+    if $use_nagios {
+	    include nagios::service::ntp 
+    }
 }
 
 # this is a client, connect to our own servers
