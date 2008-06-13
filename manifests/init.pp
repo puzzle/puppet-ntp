@@ -1,8 +1,18 @@
+#
+# ntp module
 # ntp/manifests/init.pp - Classes for configuring NTP
+#
 # Copyright (C) 2007 David Schmitt <david@schmitt.edv-bus.at>
-# improved by admin@immerda.ch
-# adapted by Puzzle ITC haerry+puppet(at)puzzle.ch
-# See LICENSE for the full license granted to you.
+# Copyright 2008, admin(at)immerda.ch
+# Copyright 2008, Puzzle ITC GmbH
+# Marcel Härry haerry+puppet(at)puzzle.ch
+# Simon Josi josi+puppet(at)puzzle.ch
+#
+# This program is free software; you can redistribute 
+# it and/or modify it under the terms of the GNU 
+# General Public License version 3 as published by 
+# the Free Software Foundation.
+#
 
 modules_dir { "ntp": }
 	
@@ -57,18 +67,20 @@ class ntp::base {
         subscribe => [ File["/etc/ntp.conf"], File["/etc/ntp.client.conf"], File["/etc/ntp.server.conf"] ],
     }
 	
-	# various files and directories used by this module
-	file{"${ntp_base_dir}/munin_plugin":
+    if $use_munin {
+        # various files and directories used by this module
+	    file{"${ntp_base_dir}/munin_plugin":
 			source => "puppet://$server/ntp/ntp_",
 			mode => 0755, owner => root, group => 0;
-	}
+	    }
 
-	$ntps = gsub(split($configured_ntp_servers, " "), "(.+)", "ntp_\\1")
-	munin::plugin { $ntps:
-		ensure => "munin_plugin",
-		script_path_in => $ntp_base_dir
-	}
+	    $ntps = gsub(split($configured_ntp_servers, " "), "(.+)", "ntp_\\1")
 
+	    munin::plugin { $ntps:
+		    ensure => "munin_plugin",
+		    script_path_in => $ntp_base_dir
+	    }
+    }
 	case $ntp_servers { 
 		'': { include ntp::client }
 		default: { include ntp::server }
@@ -93,7 +105,6 @@ class ntp::base {
 				;
 		}
 	}
-
 }
 
 define ntp::upstream_server($server_options = 'iburst') {
@@ -146,7 +157,9 @@ class ntp::server {
 	}
 	config_file { "/etc/ntp.client.conf": content => "\n", }
 
-	include nagios::service::ntp 
+    if $use_nagios {
+	    include nagios::service::ntp 
+    }
 }
 
 # this is a client, connect to our own servers
