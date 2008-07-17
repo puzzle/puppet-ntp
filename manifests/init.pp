@@ -199,6 +199,9 @@ class ntp::debian inherits ntp::linux {
             }
         }
     }
+    Service['ntpd']{
+        name => 'ntp',
+    }
 }
 
 class ntp::openbsd inherits ntp::base {
