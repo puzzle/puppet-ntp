@@ -39,6 +39,7 @@ class ntp {
         'xenu': { include ntp::xenu }
     }
 }
+
 class ntp::base {
 
 	package { ntp:
