@@ -87,24 +87,7 @@ class ntp::base {
 	}
 
 	# collect all our configs
-	File <<| tag == 'ntp' |>>
-
-
-	# private
-	# Installs a munin plugin and configures it for a given host
-	define munin_plugin() {
-
-		$name_with_underscores = gsub($name, "\\.", "_")
-
-		# replace the "legacy" munin plugin with our own
-		munin::plugin {
-			"ntp_${name_with_underscores}": ensure => absent;
-			"ntp_${name}":
-				ensure => "munin_plugin",
-				script_path => "/var/lib/puppet/modules/ntp"
-				;
-		}
-	}
+	Concatenated_file_part <<| tag == 'ntp' |>>
 }
 
 define ntp::upstream_server($server_options = 'iburst') {
