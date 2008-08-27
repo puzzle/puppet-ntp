@@ -88,7 +88,7 @@ class ntp::base {
 	}
 
 	# collect all our configs
-	File <<| tag == 'ntp' |>>
+	Concatenated_file_part <<| tag == 'ntp' |>>
 }
 
 define ntp::upstream_server($server_options = 'iburst') {
