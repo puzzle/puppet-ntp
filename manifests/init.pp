@@ -190,11 +190,11 @@ class ntp::debian inherits ntp::linux {
 
 class ntp::openbsd inherits ntp::base {
     Service[ntpd]{
-        binary =>  "/usr/sbin/ntpd",
-        provider => base,
-        pattern => ntpd,
+        restart => "kill -HUP `ps ax | grep ntpd | head -n 1 | awk '{ print $1 }'`",
+        stop => "kill `ps ax | grep ntpd | head -n 1 | awk '{ print $1 }'`",
+        start => '/usr/sbin/ntpd',
+        hasstatus => false,
     }
- 
 }
 
 # include this class on hosts who collect files but do not have other ntp infrastructure
