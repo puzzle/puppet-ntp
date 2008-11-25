@@ -183,18 +183,18 @@ class ntp::debian inherits ntp::linux {
             }
         }
     }
+    Service['ntpd']{
+        name => 'ntp',
+    }
 }
 
 class ntp::openbsd inherits ntp::base {
-    Package[ntp]{
-	    source => 'ftp://mirror.switch.ch/pub/OpenBSD/4.2/packages/i386/ntp-4.2.0ap3.tgz',
-    }
     Service[ntpd]{
-        binary =>  "/usr/sbin/ntpd",
-        provider => base,
-        pattern => ntpd,
+        restart => "kill -HUP `ps ax | grep ntpd | head -n 1 | awk '{ print $1 }'`",
+        stop => "kill `ps ax | grep ntpd | head -n 1 | awk '{ print $1 }'`",
+        start => '/usr/sbin/ntpd',
+        hasstatus => false,
     }
- 
 }
 
 # include this class on hosts who collect files but do not have other ntp infrastructure
